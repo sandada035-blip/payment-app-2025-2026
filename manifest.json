@@ -7,9 +7,9 @@
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "https://drive.google.com/uc?id=1oIqI5efkxsTz8sQy_C-BPqZrXar_NbHO",
+     "src": "logo.jpg"
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpg"
     }
   ]
 }
