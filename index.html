@@ -522,13 +522,16 @@
       });
     }
 
-    function applyTheme(value) {
-      theme = value === "dark" ? "dark" : "light";
-      document.body.classList.toggle("dark", theme === "dark");
-      localStorage.setItem("premiumTheme", theme);
-      document.getElementById("themeToggle").innerText = theme === "dark" ? "☀️ ភ្លឺ" : "🌙 ងងឹត";
-      if(rawStudents.length > 0) renderCharts();
-    }
+   function applyTheme(value) {
+  theme = value === "dark" ? "dark" : "light";
+  document.body.classList.toggle("dark", theme === "dark");
+  localStorage.setItem("premiumTheme", theme);
+  
+  // លុប ឬដាក់សញ្ញា // ពីមុខបន្ទាត់ខាងក្រោមនេះ ព្រោះលោកគ្រូអត់មានប៊ូតុងនេះទេ
+  // document.getElementById("themeToggle").innerText = theme === "dark" ? "☀️ ភ្លឺ" : "🌙 ងងឹត"; 
+  
+  if(rawStudents.length > 0) renderCharts();
+}
     
     function toggleTheme() { applyTheme(theme === "dark" ? "light" : "dark"); }
     function reloadData() { loadData(); }
