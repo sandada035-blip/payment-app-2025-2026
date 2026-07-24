@@ -6,30 +6,490 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3b82f6">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="https://drive.google.com/uc?id=1oIqI5efkxsTz8sQy_C-BPqZrXar_NbHO">
   
   <title>របាយការណ៍ថវិកាសិស្ស</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- សូមបញ្ចូល CSS Style ដើមរបស់អ្នកនៅទីនេះ (លាក់ខ្លះដើម្បីសន្សំទំហំអត្ថបទ) -->
   <style>
-    /* ចម្លងកូដ CSS ចាស់ទាំងស្រុងមកដាក់ទីនេះ */
-    :root { --primary: #3b82f6; --bg-color: #f8fafc; --text-main: #0f172a; } /* ... */
+    :root {
+      --primary: #3b82f6; --primary-dark: #1d4ed8; --primary-soft: #eff6ff;
+      --bg-color: #f8fafc; --surface: #ffffff; --surface-2: rgba(255, 255, 255, 0.7);
+      --text-main: #0f172a; --text-muted: #64748b;
+      --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 10px 25px -3px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 20px 30px -5px rgba(0, 0, 0, 0.12);
+      --radius-lg: 20px; --radius-md: 14px;
+      --grad-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      --grad-darkblue: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      --grad-pink: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+      --grad-purple: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+      --grad-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --grad-red: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      --grad-orange: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --grad-rose: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+    }
+
+    body.dark {
+      --bg-color: #0f172a; --surface: #1e293b;
+      --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Kantumruy Pro', sans-serif;
+      background: var(--bg-color); color: var(--text-main);
+      font-size: 15px; line-height: 1.5;
+      transition: background 0.3s ease, color 0.3s ease;
+      -webkit-font-smoothing: antialiased;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    .page-shell { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
+
+    .app-bar {
+      position: sticky; top: 0; z-index: 100;
+      padding: 16px 24px; color: white; background: var(--grad-blue);
+      border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2); margin-bottom: 24px;
+    }
+    .app-bar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 16px; }
+    
+    .school-logo { width: 52px; height: 52px; border-radius: 14px; }
+    .app-title { flex: 1; }
+    .school-name { font-size: 12px; font-weight: 500; opacity: 0.9; text-transform: uppercase; }
+    .app-title h3 { font-size: clamp(18px, 4vw, 24px); font-weight: 700; margin-top: 2px; }
+    .display-class { display: inline-block; margin-top: 4px; padding: 4px 10px; font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.2); border-radius: 8px; }
+    
+    .header-right { display: flex; gap: 12px; }
+    .header-btn {
+      border: none; background: rgba(255, 255, 255, 0.15); color: white;
+      font-family: inherit; font-weight: 600; cursor: pointer;
+      padding: 0 16px; height: 42px; border-radius: 12px;
+      transition: all 0.2s; backdrop-filter: blur(10px);
+    }
+    .header-btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+
+    .controls-container { padding: 0 16px; margin-bottom: 24px; }
+    .controls {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);
+    }
+    
+    .field { position: relative; }
+    .field-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    select, input {
+      width: 100%; height: 48px; padding: 0 16px 0 40px;
+      font-size: 14px; font-family: inherit; font-weight: 500;
+      border-radius: 12px; border: 1.5px solid var(--border);
+      background: var(--bg-color); color: var(--text-main);
+      transition: all 0.2s ease; outline: none;
+    }
+    select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); background: var(--surface); }
+
+    .action-row { grid-column: 1 / -1; display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+    .action-btn {
+      border: 1.5px solid var(--border); background: var(--surface); color: var(--text-main);
+      height: 42px; padding: 0 18px; border-radius: 10px; font-family: inherit;
+      font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .action-btn.primary { background: var(--primary); color: white; border: none; }
+    .action-btn.primary:hover { background: var(--primary-dark); color: white; box-shadow: var(--shadow-md); }
+    .action-btn.excel { background: #10b981; color: white; border: none; }
+    .action-btn.excel:hover { background: #059669; box-shadow: var(--shadow-md); }
+    .action-btn.telegram { background: #0088cc; color: white; border: none; }
+    .action-btn.telegram:hover { background: #006699; box-shadow: var(--shadow-md); }
+
+    .dashboard-content { padding: 0 16px; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card {
+      position: relative; overflow: hidden; padding: 20px;
+      border-radius: var(--radius-lg); color: white; box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; justify-content: space-between;
+      transition: transform 0.3s ease, box-shadow 0.3s ease; min-height: 120px;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    .card::before { content: ""; position: absolute; top: 0; right: 0; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%; transform: translate(30%, -30%); }
+    .card::after { content: attr(data-icon); position: absolute; right: 10px; bottom: 0px; font-size: 70px; opacity: 0.15; line-height: 1; }
+    .card h3 { font-size: 13px; font-weight: 500; opacity: 0.9; margin-bottom: 8px; }
+    .card p { font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; margin: 0;}
+    .card.total, .card.annual, .card.partial, .card.unpaid { grid-column: span 2; }
+    .card.total { background: var(--grad-blue); } .card.male { background: var(--grad-darkblue); } .card.female { background: var(--grad-pink); } .card.annual { background: var(--grad-purple); } .card.collected { background: var(--grad-green); } .card.balance { background: var(--grad-red); } .card.partial { background: var(--grad-orange); } .card.unpaid { background: var(--grad-rose); }
+
+    .panel-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-bottom: 24px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); }
+    .panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .panel-subtitle { font-size: 12px; color: var(--text-muted); }
+    .chart-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .chart-container { position: relative; height: 200px; width: 100%; }
+
+    .summary-grid { display: grid; gap: 12px; }
+    .detail-item { background: var(--bg-color); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+    .detail-label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .detail-value { font-size: 15px; font-weight: 700; }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-title { font-size: 18px; font-weight: 700; }
+    .result-count { font-size: 13px; font-weight: 600; background: var(--primary-soft); color: var(--primary-dark); padding: 4px 12px; border-radius: 20px; }
+    .dark .result-count { background: rgba(59,130,246,0.2); color: #93c5fd; }
+
+    .student-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .student-item { background: var(--surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 12px; }
+    .student-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .st-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 12px; }
+    .student-left { display: flex; gap: 12px; align-items: center; }
+    .avatar { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: white; font-weight: 700; background: var(--grad-blue); font-size: 16px; }
+    .st-name { font-size: 16px; font-weight: 700; }
+    .st-id { font-size: 11px; background: var(--bg-color); border: 1px solid var(--border); padding: 4px 8px; border-radius: 8px; font-weight: 600; color: var(--text-muted); }
+    .st-info { display: flex; justify-content: space-between; font-size: 13px; align-items: center; }
+    .st-label { color: var(--text-muted); } .st-value { font-weight: 600; }
+    .st-balance { color: var(--danger); font-weight: 700; } .st-paid { color: var(--success); font-weight: 700; }
+
+    .badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+    .badge-paid { background: #d1fae5; color: #065f46; } .badge-partial { background: #fef3c7; color: #92400e; } .badge-unpaid { background: #fee2e2; color: #991b1b; }
+    .dark .badge-paid { background: rgba(16, 185, 129, 0.2); color: #34d399; } .dark .badge-partial { background: rgba(245, 158, 11, 0.2); color: #fbbf24; } .dark .badge-unpaid { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .pagination-wrap { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+    .pagination-info { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+    .page-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text-main); width: 36px; height: 36px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-grid; place-items: center; margin-left: 4px; }
+    .page-btn:hover:not(:disabled) { background: var(--bg-color); }
+    .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #loading { text-align: center; padding: 60px 20px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; margin: 0 auto 16px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { display: none; padding: 40px; text-align: center; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-md); color: var(--text-muted); font-weight: 600; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 2000; }
+    .modal { width: 100%; max-width: 450px; background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; animation: modalIn 0.3s ease; box-shadow: var(--shadow-hover); }
+    @keyframes modalIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { padding: 20px; background: var(--grad-blue); color: white; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; font-size: 18px; }
+    .modal-body { padding: 20px; }
+    .modal-grid { display: grid; gap: 12px; margin-bottom: 20px; }
+    
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s ease; z-index: 3000; box-shadow: var(--shadow-md); }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .print-only { display: none !important; }
+    .screen-only { display: block; }
+    #invoice-template { display: none; }
+    
+    @media print {
+      @page { size: A4 portrait; margin: 12mm; }
+      body { background: white; color: black; font-family: 'Khmer OS Battambang', sans-serif; font-size: 11pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body.printing-invoice .page-shell, body.printing-invoice .modal-overlay, body.printing-invoice .toast { display: none !important; }
+      body.printing-invoice #invoice-template { display: block !important; width: 100%; max-width: 800px; margin: 0 auto; padding: 20px; }
+      .inv-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+      .inv-header h2 { font-size: 18pt; margin: 0 0 5px 0; font-weight: 700; }
+      .inv-header h3 { font-size: 15pt; margin: 0; font-weight: 600; text-decoration: underline; }
+      .inv-body { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+      .inv-body td { padding: 10px; font-size: 13pt; vertical-align: middle; }
+      .inv-amount-box { border: 1px dashed #000; padding: 15px; background-color: #f8f9fa !important; margin-top: 10px; border-radius: 8px; }
+      .inv-footer { display: flex; justify-content: space-between; margin-top: 50px; page-break-inside: avoid; }
+      .inv-footer-left, .inv-footer-right { text-align: center; width: 45%; }
+      body:not(.printing-invoice) .screen-only, body:not(.printing-invoice) .controls-container, body:not(.printing-invoice) #loading, body:not(.printing-invoice) .modal-overlay, body:not(.printing-invoice) .panel-grid { display: none !important; }
+      body:not(.printing-invoice) .app-bar { position: static; background: transparent; color: black; box-shadow: none; border-bottom: none; border-radius: 0; padding: 0; margin-bottom: 20px; text-align: center; }
+      body:not(.printing-invoice) .school-logo { display: none; }
+      body:not(.printing-invoice) .app-title .school-name { font-size: 13pt; font-family: 'Khmer OS Muol Light', 'Khmer OS Battambang', sans-serif; margin-bottom: 5px; }
+      body:not(.printing-invoice) .app-title h3 { color: black !important; font-size: 16pt; font-family: 'Khmer OS Muol Light', 'Khmer OS Battambang', sans-serif; margin-bottom: 10px; }
+      body:not(.printing-invoice) .display-class { font-size: 12pt; border: none; font-weight: normal; background: transparent; padding: 0; color: black; }
+      body:not(.printing-invoice) .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; border: 1px solid #000; padding: 10px; border-radius: 0; }
+      body:not(.printing-invoice) .card { flex: 1 1 auto; border: none; padding: 0 10px; text-align: center; background: transparent !important; color: black !important; min-height: auto; box-shadow: none; border-right: 1px solid #ddd; border-radius: 0; }
+      body:not(.printing-invoice) .card:last-child { border-right: none; }
+      body:not(.printing-invoice) .card h3 { font-size: 11pt; font-weight: normal; margin-bottom: 4px; }
+      body:not(.printing-invoice) .card p { font-size: 12pt; font-weight: bold; }
+      body:not(.printing-invoice) .card::before, body:not(.printing-invoice) .card::after { display: none !important; }
+      body:not(.printing-invoice) .print-only { display: table !important; width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 11pt; }
+      body:not(.printing-invoice) .print-only thead { display: table-header-group; }
+      body:not(.printing-invoice) .print-only tr { page-break-inside: avoid; }
+      body:not(.printing-invoice) .print-only th, body:not(.printing-invoice) .print-only td { border: 1px solid #000 !important; padding: 6px 8px !important; vertical-align: middle; }
+      body:not(.printing-invoice) .print-only th { background-color: #f1f5f9 !important; font-weight: bold; text-align: center !important; font-family: 'Khmer OS Battambang', sans-serif; }
+      body:not(.printing-invoice) .print-only td:nth-child(1), body:not(.printing-invoice) .print-only td:nth-child(3), body:not(.printing-invoice) .print-only td:nth-child(4), body:not(.printing-invoice) .print-only td:nth-child(7) { text-align: center !important; }
+      body:not(.printing-invoice) .print-only td:nth-child(5), body:not(.printing-invoice) .print-only td:nth-child(6) { text-align: right !important; padding-right: 10px !important; }
+      body:not(.printing-invoice) div.signature-section.print-only { display: flex !important; justify-content: space-between !important; width: 100% !important; margin-top: 40px; page-break-inside: avoid; font-size: 12pt; }
+      body:not(.printing-invoice) .signature-section .left-sign, body:not(.printing-invoice) .signature-section .right-sign { width: 45%; text-align: center; }
+    }
+
+    @media (max-width: 1024px) { 
+      .panel-grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (max-width: 768px) {
+      .hide-on-mobile { display: none !important; }
+      .app-bar { padding: 12px 16px; margin-bottom: 16px; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+      .app-bar-inner { gap: 8px; }
+      .app-title h3 { font-size: 18px; }
+      .header-btn { padding: 0 12px; height: 36px; font-size: 13px; }
+      .controls { grid-template-columns: 1fr; gap: 12px; padding: 12px; }
+      .action-row { flex-direction: column; }
+      .action-btn { width: 100%; justify-content: center; }
+      select, input { height: 44px; font-size: 16px; }
+      .cards { grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+      .card { padding: 16px; min-height: 100px; }
+      .card h3 { font-size: 12px; }
+      .card p { font-size: 20px; }
+      .card.total, .card.annual, .card.partial, .card.unpaid { grid-column: span 1; }
+      .panel { padding: 16px; }
+      .chart-container { height: 150px; }
+      .student-list { grid-template-columns: 1fr; gap: 12px; }
+    }
+    
+    @media (max-width: 480px) {
+      .page-shell { padding-bottom: 60px; }
+      .app-bar { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; padding: 10px 12px; }
+      .app-bar-inner { gap: 6px; }
+      .school-logo { width: 40px; height: 40px; font-size: 20px; }
+      .app-title h3 { font-size: 15px; margin-top: 0; }
+      .school-name { font-size: 10px; }
+      .header-right { gap: 4px; }
+      .header-btn { padding: 0 8px; height: 32px; font-size: 11px; }
+      .controls-container { padding: 0 10px; margin-bottom: 12px; }
+      .controls { padding: 10px; gap: 10px; }
+      .field-icon { left: 10px; font-size: 14px; }
+      .action-row { gap: 6px; }
+      .action-btn { height: 40px; font-size: 12px; padding: 0 10px; }
+      select, input { height: 40px; font-size: 15px; padding: 0 8px 0 32px; border-radius: 10px; }
+      .dashboard-content { padding: 0 10px; }
+      .cards { grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; }
+      .card { padding: 12px; border-radius: 12px; min-height: 85px; }
+      .card h3 { font-size: 11px; margin-bottom: 4px; }
+      .card p { font-size: 18px; }
+      .card::after { font-size: 45px; }
+      .panel { padding: 12px; }
+      .panel-title { font-size: 14px; }
+      .chart-wrap { grid-template-columns: 1fr; }
+      .chart-container { height: 140px; }
+      .section-title { font-size: 15px; }
+      .student-list { grid-template-columns: 1fr; gap: 10px; }
+      .student-item { padding: 10px; border-radius: 10px; }
+      .st-name { font-size: 14px; }
+      .avatar { width: 36px; height: 36px; font-size: 12px; }
+      .st-id { font-size: 10px; }
+      .pagination-wrap { padding: 10px; }
+      .page-btn { width: 28px; height: 28px; font-size: 12px; }
+      .modal { max-width: 90%; border-radius: 14px; }
+      .modal-header { padding: 14px; }
+      .modal-title { font-size: 15px; }
+      .modal-body { padding: 14px; }
+    }
+    
+    @media (max-width: 360px) {
+      .school-name { display: none; }
+      .app-title h3 { font-size: 14px; }
+      .header-right { position: absolute; right: 8px; }
+      .action-btn { font-size: 11px; padding: 0 8px; }
+    }
   </style>
 </head>
 <body>
-  <!-- ចម្លងផ្នែក HTML (App Bar, Controls, Dashboard) ចាស់ទាំងស្រុងមកដាក់ទីនេះ -->
+  <div class="page-shell">
+    <header class="app-bar">
+      <div class="app-bar-inner">
+        <img class="school-logo" src="https://drive.google.com/uc?id=1oIqI5efkxsTz8sQy_C-BPqZrXar_NbHO" alt="Logo" style="object-fit: contain; background: rgba(255, 255, 255, 0.9); padding: 4px;">
+        <div class="app-title">
+          <div class="school-name">សាលាបឋមសិក្សាសម្តេចព្រះរាជអគ្គមហេសីនរោត្តមមុនីនាថសីហនុ</div>
+          <h3>របាយការណ៍ថវិកាសិស្ស</h3>
+          <div class="display-class" id="header-class-name">គ្រប់ថ្នាក់ទាំងអស់</div>
+        </div>
+        <div class="header-right screen-only">
+          <button class="header-btn" onclick="toggleTheme()" id="themeToggle">🌙 ងងឹត</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls-container screen-only animate-fade-up">
+      <div class="controls">
+        <div class="field">
+          <span class="field-icon">🎓</span>
+          <select id="classFilter" onchange="loadData()"><option value="All">បង្ហាញគ្រប់ថ្នាក់ទាំងអស់</option></select>
+        </div>
+        <div class="field">
+          <span class="field-icon">🚻</span>
+          <select id="genderFilter" onchange="applyFilters()">
+            <option value="all">ភេទទាំងអស់</option><option value="male">ប្រុស</option><option value="female">ស្រី</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-icon">🏷️</span>
+          <select id="statusFilter" onchange="applyFilters()">
+            <option value="all">ស្ថានភាពទាំងអស់</option><option value="paid">បានបង់</option><option value="partial">បង់មិនទាន់គ្រប់</option><option value="unpaid">មិនទាន់បង់</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-icon">↕️</span>
+          <select id="sortFilter" onchange="applyFilters()">
+            <option value="original">លំដាប់តាមបញ្ជី (Google Sheet)</option>
+            <option value="name-asc">ឈ្មោះ A → Z</option>
+            <option value="name-desc">ឈ្មោះ Z → A</option>
+            <option value="balance-desc">ជំពាក់ច្រើន → តិច</option>
+            <option value="balance-asc">ជំពាក់តិច → ច្រើន</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="ស្វែងរកឈ្មោះ ឬអត្តលេខ...">
+        </div>
+        <div class="action-row">
+          <select id="pageSize" onchange="changePageSize()" style="width:120px; height: 42px;">
+            <option value="12" selected>12 / ទំព័រ</option><option value="24">24 / ទំព័រ</option><option value="50">50 / ទំព័រ</option>
+          </select>
+          <button class="action-btn" onclick="reloadData()" title="Refresh">🔄</button>
+          <button class="action-btn telegram hide-on-mobile" onclick="sendTelegramReport()">✈️ Telegram</button>
+          <button class="action-btn excel" onclick="exportExcel()">⬇ Excel</button>
+          <button class="action-btn primary" onclick="window.print()">🖨️ ព្រីនតារាង</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading"><div class="spinner"></div>កំពុងទាញយកទិន្នន័យ...</div>
+
+    <main id="dashboard" class="dashboard-content" style="display:none;">
+      <div class="cards animate-fade-up" style="animation-delay: 0.1s;">
+        <div class="card total" data-icon="👥"><h3>សិស្សសរុប</h3><p id="t-students">0</p></div>
+        <div class="card male" data-icon="👦"><h3>សិស្សប្រុស</h3><p id="t-male">0</p></div>
+        <div class="card female" data-icon="👧"><h3>សិស្សស្រី</h3><p id="t-female">0</p></div>
+        <div class="card annual" data-icon="📅"><h3>ថវិកាត្រូវប្រមូល</h3><p id="t-annual">0 ៛</p></div>
+        <div class="card collected" data-icon="💰"><h3>បានបង់សរុប</h3><p id="t-collected">0 ៛</p></div>
+        <div class="card balance" data-icon="❌"><h3>ជំពាក់សរុប</h3><p id="t-balance">0 ៛</p></div>
+        <div class="card partial" data-icon="⚠️"><h3>បង់មិនទាន់គ្រប់</h3><p id="t-partial">0 នាក់</p></div>
+        <div class="card unpaid" data-icon="🚫"><h3>មិនទាន់បង់សោះ</h3><p id="t-unpaid">0 នាក់</p></div>
+      </div>
+
+      <div class="panel-grid animate-fade-up" style="animation-delay: 0.2s;">
+        <div class="panel">
+          <div class="panel-header"><div><h3 class="panel-title">ស្ថិតិក្រាប</h3><div class="panel-subtitle">ទិដ្ឋភាពទូទៅនៃទិន្នន័យ</div></div></div>
+          <div class="chart-wrap">
+            <div class="chart-container"><canvas id="genderChart"></canvas></div>
+            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div><h3 class="panel-title">ព័ត៌មានបន្ថែម</h3></div></div>
+          <div class="summary-grid">
+            <div class="detail-item"><span class="detail-label">ចំនួនសិស្សបង្ហាញបច្ចុប្បន្ន</span><span class="detail-value" id="visible-summary">0 នាក់</span></div>
+            <div class="detail-item"><span class="detail-label">ព្រីនវិក្កយបត្រ</span><span class="detail-value" style="font-size: 13px; font-weight: 500;">ចុចលើសិស្សណាម្នាក់ ដើម្បីព្រីនវិក្កយបត្រ</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header screen-only animate-fade-up" style="animation-delay: 0.3s;">
+        <h3 class="section-title">បញ្ជីឈ្មោះសិស្ស</h3>
+        <div class="result-count" id="result-count">0 នាក់</div>
+      </div>
+
+      <div class="student-list screen-only animate-fade-up" id="student-list-container" style="animation-delay: 0.4s;"></div>
+
+      <div class="pagination-wrap screen-only" id="pagination-wrap">
+        <div class="pagination-info" id="pagination-info">បង្ហាញ 0 - 0 នៃ 0</div>
+        <div style="display: flex;" id="pagination-controls"></div>
+      </div>
+
+      <div class="empty-state screen-only" id="empty-state">មិនមានទិន្នន័យត្រូវនឹងការស្វែងរកទេ 🔍</div>
+
+      <table class="print-only" id="print-table">
+        <thead><tr><th>អត្តលេខ</th><th>ឈ្មោះសិស្ស</th><th>ភេទ</th><th>ថ្នាក់</th><th>បានបង់</th><th>ប្រាក់ខ្វះ</th><th>ស្ថានភាព</th></tr></thead>
+        <tbody id="print-table-body"></tbody>
+      </table>
+
+      <div class="signature-section print-only" style="display: none;" id="print-signature">
+        <div class="left-sign" style="text-align: center; width: 45%;">
+          <p>បានឃើញ និងឯកភាព</p>
+          <p><strong>នាយកសាលា</strong></p>
+        </div>
+        <div class="right-sign" style="text-align: center; width: 45%;">
+          <p style="font-style:italic; white-space: nowrap;">ធ្វើនៅ................ថ្ងៃទី........ខែ........ឆ្នាំ២០២...</p>
+          <p><strong>អ្នករៀបចំរបាយការណ៍</strong></p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="studentModalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div><h3 class="modal-title" id="modalTitle">ឈ្មោះ</h3><div id="modalSubtitle" style="font-size:13px; opacity: 0.8;"></div></div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid" id="modalDetails"></div>
+        <div id="modalStatusPill" style="text-align: center;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div id="invoice-template">
+    <div class="inv-header">
+      <h2>សាលាបឋមសិក្សាសម្តេចព្រះរាជអគ្គមហេសីនរោត្តមមុនីនាថសីហនុ</h2>
+      <h3>វិក្កយបត្របង់ប្រាក់ / បង្កាន់ដៃទទួលប្រាក់</h3>
+    </div>
+    <table class="inv-body">
+      <tr>
+        <td style="width: 50%;"><strong>អត្តលេខសិស្ស៖</strong> <span id="inv-id"></span></td>
+        <td style="width: 50%;"><strong>ថ្នាក់៖</strong> <span id="inv-class"></span></td>
+      </tr>
+      <tr>
+        <td><strong>ឈ្មោះសិស្ស៖</strong> <span id="inv-name"></span></td>
+        <td><strong>ភេទ៖</strong> <span id="inv-gender"></span></td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <div class="inv-amount-box">
+            <table style="width: 100%;">
+              <tr>
+                <td><strong>ប្រាក់បានបង់៖</strong> <span id="inv-paid" style="font-weight:bold; font-size: 14pt; color: #10b981;"></span></td>
+                <td><strong>ប្រាក់ខ្វះ (ជំពាក់)៖</strong> <span id="inv-balance" style="font-weight:bold; color: #ef4444;"></span></td>
+                <td><strong>ស្ថានភាព៖</strong> <span id="inv-status"></span></td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <div class="inv-footer">
+      <div class="inv-footer-left"><p>អ្នកបង់ប្រាក់</p><p><strong>ហត្ថលេខា ឬស្នាមមេដៃ</strong></p></div>
+      <div class="inv-footer-right"><p id="inv-date">ធ្វើនៅ................... ថ្ងៃទី....... ខែ....... ឆ្នាំ២០២...</p><p><strong>អ្នករៀបចំរបាយការណ៍</strong></p></div>
+    </div>
+  </div>
 
   <script>
-    // ១. កំណត់ API URL ដែលបានពី Google Apps Script ទីនេះ
-    const API_URL = "សូមដាក់_URL_APP_SCRIPT_នៅទីនេះ"; 
+    // ១. កំណត់ API URL ដែលបានពី Google Apps Script ទីនេះ (បានលុប 'ះ' ចេញ)
+    const API_URL = "https://script.google.com/macros/s/AKfycbzt-rCMYCm6wiN6yuYW6oT9FC_8aFdQz7eQCa4UerXoEFA5SXv61bChhIl-mRHWesHF/exec"; 
 
     // ចុះឈ្មោះ Service Worker សម្រាប់ PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
       });
     }
 
@@ -37,10 +497,42 @@
     let filteredStudents = [];
     let currentPage = 1;
     let pageSize = 12;
+    let theme = localStorage.getItem("premiumTheme") || "light";
+    let searchDebounce, resizeTimeout;
+    let genderChart, statusChart;
+    let selectedStudentForInvoice = null;
 
     window.onload = () => {
+      applyTheme(theme);
+      bindUI();
       loadClasses();
     };
+
+    function bindUI() {
+      document.getElementById("searchInput").addEventListener("input", () => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(applyFilters, 200);
+      });
+      document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+      window.addEventListener("resize", () => {
+        if (document.getElementById("dashboard").style.display !== "none") {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(renderCharts, 250);
+        }
+      });
+    }
+
+    function applyTheme(value) {
+      theme = value === "dark" ? "dark" : "light";
+      document.body.classList.toggle("dark", theme === "dark");
+      localStorage.setItem("premiumTheme", theme);
+      document.getElementById("themeToggle").innerText = theme === "dark" ? "☀️ ភ្លឺ" : "🌙 ងងឹត";
+      if(rawStudents.length > 0) renderCharts();
+    }
+    
+    function toggleTheme() { applyTheme(theme === "dark" ? "light" : "dark"); }
+    function reloadData() { loadData(); }
+    function changePageSize() { pageSize = parseInt(document.getElementById("pageSize").value); applyFilters(); }
 
     function loadClasses() {
       showLoading();
@@ -57,7 +549,9 @@
 
     function loadData() {
       showLoading();
+      document.getElementById("searchInput").value = "";
       const selectedClass = document.getElementById("classFilter").value;
+      document.getElementById("header-class-name").innerText = selectedClass === "All" ? "គ្រប់ថ្នាក់ទាំងអស់" : "ថ្នាក់៖ " + selectedClass;
       
       fetch(`${API_URL}?action=getData&className=${selectedClass}`)
         .then(response => response.json())
@@ -77,6 +571,195 @@
         }).catch(() => showToast("មានបញ្ហាពេលទាញយកទិន្នន័យ"));
     }
 
+    function renderDashboard(data) {
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      
+      const unpaidCount = rawStudents.filter(s => getStatusCategory(s) === "unpaid").length;
+      
+      animateCounter("t-students", data.totalStudents);
+      animateCounter("t-male", data.totalMale);
+      animateCounter("t-female", data.totalFemale);
+      animateCounter("t-annual", data.totalAnnualBudget, true);
+      animateCounter("t-collected", data.totalCollected, true);
+      animateCounter("t-balance", data.totalBalance, true);
+      animateCounter("t-partial", data.totalPartial);
+      animateCounter("t-unpaid", unpaidCount);
+    }
+
+    function animateCounter(id, target, isMoney = false) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let start = 0, duration = 800, begin = performance.now();
+      const frame = (now) => {
+        let progress = Math.min((now - begin) / duration, 1);
+        let value = Math.floor(start + (target - start) * (1 - Math.pow(1 - progress, 4)));
+        el.innerText = isMoney ? value.toLocaleString() + " ៛" : value.toLocaleString();
+        if (progress < 1) requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    }
+
+    function applyFilters() {
+      const search = document.getElementById("searchInput").value.toUpperCase().trim();
+      const statusF = document.getElementById("statusFilter").value;
+      const genderF = document.getElementById("genderFilter").value;
+      const sortF = document.getElementById("sortFilter").value;
+
+      let list = [...rawStudents];
+
+      if(search) list = list.filter(s => s.searchStr.includes(search));
+      if(statusF !== "all") list = list.filter(s => getStatusCategory(s) === statusF);
+      if(genderF !== "all") list = list.filter(s => {
+         const isF = normalizeGender(s.gender).isFemale;
+         return genderF === "female" ? isF : !isF;
+      });
+
+      if (sortF !== "original") {
+        list.sort((a, b) => {
+          if(sortF === "name-desc") return String(b.name).localeCompare(a.name, "km");
+          if(sortF === "name-asc") return String(a.name).localeCompare(b.name, "km");
+          if(sortF === "balance-desc") return parseAmount(b.balance) - parseAmount(a.balance);
+          if(sortF === "balance-asc") return parseAmount(a.balance) - parseAmount(b.balance);
+          return 0;
+        });
+      }
+
+      filteredStudents = list;
+      currentPage = 1;
+      
+      const len = list.length;
+      document.getElementById("visible-summary").innerText = len + " នាក់";
+      document.getElementById("result-count").innerText = len + " នាក់";
+
+      renderStudents();
+      renderPagination();
+      renderPrintTable();
+      renderCharts();
+    }
+
+    function renderStudents() {
+      const container = document.getElementById("student-list-container");
+      container.innerHTML = "";
+      
+      if (!filteredStudents.length) {
+        document.getElementById("empty-state").style.display = "block";
+        return;
+      }
+      document.getElementById("empty-state").style.display = "none";
+
+      const start = (currentPage - 1) * pageSize;
+      const pageData = filteredStudents.slice(start, start + pageSize);
+      const frag = document.createDocumentFragment();
+
+      pageData.forEach(s => {
+        const isF = normalizeGender(s.gender).isFemale;
+        const cat = getStatusCategory(s);
+        
+        const div = document.createElement("div");
+        div.className = "student-item";
+        div.onclick = () => openModal(s);
+        div.innerHTML = `
+          <div class="st-header">
+            <div class="student-left">
+              <div class="avatar" style="background: ${isF ? 'var(--grad-pink)' : 'var(--grad-blue)'}">${makeInitials(s.name)}</div>
+              <div>
+                 <div class="st-name">${s.name}</div>
+                 <div style="font-size: 12px; color: var(--text-muted);">${isF ? 'ស្រី' : 'ប្រុស'} • ${s.className}</div>
+              </div>
+            </div>
+            <span class="st-id">${s.id}</span>
+          </div>
+          <div>
+             <div class="st-info"><span class="st-label">បានបង់៖</span> <span class="st-paid">${formatRiel(s.paid)}</span></div>
+             <div class="st-info" style="margin-top:4px;"><span class="st-label">ប្រាក់ខ្វះ៖</span> <span class="st-balance">${formatRiel(s.balance)}</span></div>
+          </div>
+          <div style="text-align: right; margin-top: 8px;">${getStatusBadge(s.status, cat)}</div>
+        `;
+        frag.appendChild(div);
+      });
+      container.appendChild(frag);
+    }
+
+    function renderPrintTable() {
+      const tbody = document.getElementById("print-table-body");
+      tbody.innerHTML = "";
+      const frag = document.createDocumentFragment();
+
+      filteredStudents.forEach(s => {
+        const isF = normalizeGender(s.gender).isFemale;
+        const cat = getStatusCategory(s);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${s.id}</td><td><strong>${s.name}</strong></td><td>${isF ? "ស្រី" : "ប្រុស"}</td>
+          <td>${s.className}</td><td style="color:#10b981;">${formatRiel(s.paid)}</td>
+          <td style="color:${parseAmount(s.balance)>0?'#ef4444':'#10b981'};">${formatRiel(s.balance)}</td>
+          <td>${s.status || statusCategoryText(cat)}</td>
+        `;
+        frag.appendChild(tr);
+      });
+      tbody.appendChild(frag);
+      document.getElementById("print-signature").style.display = filteredStudents.length ? "flex" : "none";
+    }
+
+    function renderPagination() {
+      const total = filteredStudents.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      document.getElementById("pagination-info").innerText = total ? `បង្ហាញ ${(currentPage-1)*pageSize+1} - ${Math.min(total, currentPage*pageSize)} នៃ ${total}` : "បង្ហាញ 0 - 0 នៃ 0";
+      
+      let html = '';
+      if(total) {
+        let st = Math.max(1, currentPage - 2), en = Math.min(totalPages, st + 4);
+        st = Math.max(1, en - 4);
+        html += `<button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+        for(let i=st; i<=en; i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goToPage(${i})">${i}</button>`;
+        html += `<button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+      }
+      document.getElementById("pagination-controls").innerHTML = html;
+    }
+
+    function goToPage(p) {
+      currentPage = Math.min(Math.max(1, p), Math.ceil(filteredStudents.length / pageSize));
+      renderStudents(); renderPagination(); window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderCharts() {
+      Chart.defaults.font.family = "'Kantumruy Pro', sans-serif";
+      const isDark = document.body.classList.contains("dark");
+      const textColor = isDark ? "#f8fafc" : "#0f172a";
+      
+      let m=0, f=0, pd=0, pt=0, up=0;
+      filteredStudents.forEach(s => {
+        normalizeGender(s.gender).isFemale ? f++ : m++;
+        const c = getStatusCategory(s);
+        if(c==="paid") pd++; else if(c==="partial") pt++; else up++;
+      });
+
+      if(genderChart) genderChart.destroy();
+      genderChart = new Chart(document.getElementById('genderChart'), {
+        type: 'doughnut',
+        data: { labels: ['ប្រុស', 'ស្រី'], datasets: [{ data: [m, f], backgroundColor: ['#3b82f6', '#ec4899'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } }, cutout: '70%' }
+      });
+
+      if(statusChart) statusChart.destroy();
+      statusChart = new Chart(document.getElementById('statusChart'), {
+        type: 'bar',
+        data: { labels: ['បានបង់', 'មិនទាន់គ្រប់', 'មិនទាន់បង់'], datasets: [{ data: [pd, pt, up], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: textColor, stepSize: 1 }, grid: { color: isDark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.05)' } }, x: { ticks: { color: textColor }, grid: { display: false } } } }
+      });
+    }
+
+    function exportExcel() {
+      const rows = filteredStudents.length ? filteredStudents : rawStudents;
+      if (!rows.length) { showToast("គ្មានទិន្នន័យ"); return; }
+      const data = rows.map(s => ({ "អត្តលេខ": s.id, "ឈ្មោះសិស្ស": s.name, "ភេទ": normalizeGender(s.gender).isFemale?"ស្រី":"ប្រុស", "ថ្នាក់": s.className, "បានបង់": formatRiel(s.paid), "ប្រាក់ខ្វះ": formatRiel(s.balance), "ស្ថានភាព": s.status || statusCategoryText(getStatusCategory(s)) }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "បញ្ជីសិស្ស");
+      XLSX.writeFile(wb, "Student_Budget_Report.xlsx");
+    }
+
     function sendTelegramReport() {
       if (!confirm("តើអ្នកពិតជាចង់ផ្ញើបញ្ជីឈ្មោះសិស្សជំពាក់ប្រាក់ ទៅកាន់ Group Telegram មែនទេ?")) return;
       showLoading();
@@ -93,7 +776,97 @@
         });
     }
 
-    // សូមរក្សាអនុគមន៍ផ្នែក UI ផ្សេងៗទៀតទុកដដែល (renderDashboard, applyFilters, renderStudents, ... )
+    function openModal(s) {
+      selectedStudentForInvoice = s;
+      const isF = normalizeGender(s.gender).isFemale;
+      const cat = getStatusCategory(s);
+      
+      document.getElementById("modalTitle").innerText = s.name;
+      document.getElementById("modalSubtitle").innerText = "អត្តលេខ៖ " + s.id;
+      
+      document.getElementById("modalDetails").innerHTML = `
+        <div class="detail-item"><span class="detail-label">ភេទ & ថ្នាក់</span><span class="detail-value">${isF?'ស្រី':'ប្រុស'} • ${s.className}</span></div>
+        <div class="detail-item"><span class="detail-label">បានបង់</span><span class="detail-value" style="color:var(--success)">${formatRiel(s.paid)}</span></div>
+        <div class="detail-item"><span class="detail-label">ប្រាក់ខ្វះ</span><span class="detail-value" style="color:var(--danger)">${formatRiel(s.balance)}</span></div>
+      `;
+      
+      document.getElementById("modalStatusPill").innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 5px;">
+           ${getStatusBadge(s.status, cat)}
+           <button class="action-btn primary" onclick="printStudentInvoice()" style="height: 40px; padding: 0 16px;">
+             🖨️ ព្រីនវិក្កយបត្រ
+           </button>
+        </div>
+      `;
+      
+      document.getElementById("studentModalOverlay").style.display = "flex";
+    }
+    
+    function closeModal(e) { if (!e || e.target === e.currentTarget) document.getElementById("studentModalOverlay").style.display = "none"; }
+
+    function printStudentInvoice() {
+      if (!selectedStudentForInvoice) return;
+      const s = selectedStudentForInvoice;
+      const isF = normalizeGender(s.gender).isFemale;
+      const cat = getStatusCategory(s);
+
+      document.getElementById("inv-id").innerText = s.id || "មិនមាន";
+      document.getElementById("inv-name").innerText = s.name;
+      document.getElementById("inv-gender").innerText = isF ? "ស្រី" : "ប្រុស";
+      document.getElementById("inv-class").innerText = s.className;
+      document.getElementById("inv-paid").innerText = formatRiel(s.paid);
+      document.getElementById("inv-balance").innerText = formatRiel(s.balance);
+      document.getElementById("inv-status").innerText = s.status || statusCategoryText(cat);
+
+      const d = new Date();
+      const khMonths = ["មករា","កុម្ភៈ","មីនា","មេសា","ឧសភា","មិថុនា","កក្កដា","សីហា","កញ្ញា","តុលា","វិច្ឆិកា","ធ្នូ"];
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = khMonths[d.getMonth()];
+      const year = d.getFullYear();
+      document.getElementById("inv-date").innerText = `ធ្វើនៅ អគ្គមហេសី, ថ្ងៃទី${day} ខែ${month} ឆ្នាំ${year}`;
+
+      document.getElementById("studentModalOverlay").style.display = "none";
+      document.body.classList.add("printing-invoice");
+      
+      window.print();
+      setTimeout(() => { document.body.classList.remove("printing-invoice"); }, 1000);
+    }
+
+    function getStatusCategory(s) {
+      const stat = String(s.status||"").toUpperCase();
+      const isChecked = stat === "TRUE" || stat.includes("✅");
+      const isPartialCheck = stat.includes("PARTIAL") || stat.includes("⚠️") || stat.includes("មិនទាន់គ្រប់");
+
+      if (isChecked) return "paid";
+      if (isPartialCheck) return "partial";
+
+      const feeNum = parseAmount(s.fee);
+      const paidNum = parseAmount(s.paid);
+      const balNum = parseAmount(s.balance);
+      
+      const isFeeBlank = String(s.fee).trim() === "";
+      const isPaidBlank = String(s.paid).trim() === "";
+      const isBalBlank = String(s.balance).trim() === "";
+
+      if (isFeeBlank && isPaidBlank && isBalBlank) return "unpaid";
+      if (!isFeeBlank && feeNum === 0) return "paid";
+      if (paidNum > 0 && balNum > 0) return "partial";
+      if (paidNum > 0 && balNum <= 0) return "paid";
+      return "unpaid";
+    }
+
+    function statusCategoryText(c) { return c==="paid"?"បានបង់":c==="partial"?"បង់មិនទាន់គ្រប់":"មិនទាន់បង់"; }
+    function getStatusBadge(s, c) { 
+      let text = s;
+      if (!text || text === "TRUE" || text === "FALSE") text = statusCategoryText(c);
+      return `<span class="badge badge-${c}">${text}</span>`; 
+    }
+    function normalizeGender(v) { return { isFemale: ['female','f','ស្រី'].includes(String(v||"").toLowerCase().trim()) }; }
+    function parseAmount(v) { const n = parseFloat(String(v).replace(/[^\d.-]/g, "")); return isNaN(n)?0:n; }
+    function formatRiel(v) { return parseAmount(v).toLocaleString() + " ៛"; }
+    function makeInitials(n) { const p = String(n||"").trim().split(/\s+/).filter(Boolean); return p.length ? (p[0][0] + (p.length>1?p[p.length-1][0]:"")).toUpperCase() : "?"; }
+    function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
+    function showLoading() { document.getElementById("loading").style.display = "block"; document.getElementById("dashboard").style.display = "none"; }
   </script>
 </body>
 </html>
