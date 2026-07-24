@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="https://drive.google.com/uc?id=1oIqI5efkxsTz8sQy_C-BPqZrXar_NbHO">
+  
+  <title>របាយការណ៍ថវិកាសិស្ស</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- សូមបញ្ចូល CSS Style ដើមរបស់អ្នកនៅទីនេះ (លាក់ខ្លះដើម្បីសន្សំទំហំអត្ថបទ) -->
+  <style>
+    /* ចម្លងកូដ CSS ចាស់ទាំងស្រុងមកដាក់ទីនេះ */
+    :root { --primary: #3b82f6; --bg-color: #f8fafc; --text-main: #0f172a; } /* ... */
+  </style>
+</head>
+<body>
+  <!-- ចម្លងផ្នែក HTML (App Bar, Controls, Dashboard) ចាស់ទាំងស្រុងមកដាក់ទីនេះ -->
+
+  <script>
+    // ១. កំណត់ API URL ដែលបានពី Google Apps Script ទីនេះ
+    const API_URL = "សូមដាក់_URL_APP_SCRIPT_នៅទីនេះ"; 
+
+    // ចុះឈ្មោះ Service Worker សម្រាប់ PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+
+    let rawStudents = [];
+    let filteredStudents = [];
+    let currentPage = 1;
+    let pageSize = 12;
+
+    window.onload = () => {
+      loadClasses();
+    };
+
+    function loadClasses() {
+      showLoading();
+      fetch(`${API_URL}?action=getClasses`)
+        .then(response => response.json())
+        .then(res => {
+          if (res.status === "success") {
+            const sel = document.getElementById("classFilter");
+            res.data.forEach(c => sel.add(new Option("ថ្នាក់ " + c, c)));
+            loadData();
+          }
+        }).catch(() => showToast("បរាជ័យក្នុងការទាញយកថ្នាក់"));
+    }
+
+    function loadData() {
+      showLoading();
+      const selectedClass = document.getElementById("classFilter").value;
+      
+      fetch(`${API_URL}?action=getData&className=${selectedClass}`)
+        .then(response => response.json())
+        .then(res => {
+          if (res.status === "success") {
+            const data = res.data;
+            rawStudents = data.students.map(s => {
+               const cat = getStatusCategory(s);
+               let actualBalance = s.balance;
+               if (cat === "unpaid" && s.balance === 0) actualBalance = s.fee; 
+               return { ...s, balance: actualBalance, searchStr: `${s.id} ${s.name} ${s.className}`.toUpperCase() };
+            });
+            renderDashboard(data);
+            applyFilters();
+            showToast("ទាញយកទិន្នន័យជោគជ័យ");
+          }
+        }).catch(() => showToast("មានបញ្ហាពេលទាញយកទិន្នន័យ"));
+    }
+
+    function sendTelegramReport() {
+      if (!confirm("តើអ្នកពិតជាចង់ផ្ញើបញ្ជីឈ្មោះសិស្សជំពាក់ប្រាក់ ទៅកាន់ Group Telegram មែនទេ?")) return;
+      showLoading();
+      fetch(`${API_URL}?action=sendTelegram`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("dashboard").style.display = "block";
+          showToast(res.message);
+        }).catch(() => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("dashboard").style.display = "block";
+          showToast("មានបញ្ហា មិនអាចផ្ញើសារបានទេ!");
+        });
+    }
+
+    // សូមរក្សាអនុគមន៍ផ្នែក UI ផ្សេងៗទៀតទុកដដែល (renderDashboard, applyFilters, renderStudents, ... )
+  </script>
+</body>
+</html>
