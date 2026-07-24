@@ -483,8 +483,8 @@
   </div>
 
   <script>
-    // ១. កំណត់ API URL ដែលបានពី Google Apps Script ទីនេះ (បានលុប 'ះ' ចេញ)
-  const API_URL = "https://script.google.com/macros/s/AKfycbzr_yDwtbGDuXvzH7viFInpi6-wJxg-exbUez8yiLOXmSKax85hIukt-cowo3SG2NlI/exec";
+    // ១. កំណត់ API URL ដែលបានពី Google Apps Script ទីនេះ
+    const API_URL = "https://script.google.com/macros/s/AKfycbzr_yDwtbGDuXvzH7viFInpi6-wJxg-exbUez8yiLOXmSKax85hIukt-cowo3SG2NlI/exec";
 
     // ចុះឈ្មោះ Service Worker សម្រាប់ PWA
     if ('serviceWorker' in navigator) {
@@ -544,7 +544,11 @@
             res.data.forEach(c => sel.add(new Option("ថ្នាក់ " + c, c)));
             loadData();
           }
-        }).catch(() => showToast("បរាជ័យក្នុងការទាញយកថ្នាក់"));
+        }).catch((err) => { 
+          console.error(err);
+          showToast("បរាជ័យក្នុងការទាញយកថ្នាក់"); 
+          document.getElementById("loading").style.display = "none"; 
+        });
     }
 
     function loadData() {
@@ -568,7 +572,12 @@
             applyFilters();
             showToast("ទាញយកទិន្នន័យជោគជ័យ");
           }
-        }).catch(() => showToast("មានបញ្ហាពេលទាញយកទិន្នន័យ"));
+        }).catch((err) => { 
+          console.error(err);
+          showToast("មានបញ្ហាពេលទាញយកទិន្នន័យ"); 
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("dashboard").style.display = "block";
+        });
     }
 
     function renderDashboard(data) {
