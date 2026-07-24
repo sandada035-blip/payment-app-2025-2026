@@ -1,15 +1,11 @@
 {
   "name": "ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យសិស្ស",
-  "short_name": "Akk Mohesey",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#3b82f6",
+  ...
   "icons": [
     {
-     "src": "logo.jpg"
+      "src": "logo.jpg", 
       "sizes": "512x512",
-      "type": "image/jpg"
+      "type": "image/jpeg"
     }
   ]
 }
