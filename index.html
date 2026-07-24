@@ -499,11 +499,15 @@ button.primary{
 
     // ចុះឈ្មោះ Service Worker សម្រាប់ PWA
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
-      });
-    }
-
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+            reg.update();
+            console.log('Service Worker Updated');
+        })
+        .catch(err => console.log(err));
+    });
+}
     let rawStudents = [];
     let filteredStudents = [];
     let currentPage = 1;
