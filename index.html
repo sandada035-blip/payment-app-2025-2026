@@ -832,26 +832,23 @@
       setTimeout(() => { document.body.classList.remove("printing-invoice"); }, 1000);
     }
 
-    function getStatusCategory(s) {
-      const stat = String(s.status||"").toUpperCase();
-      const isChecked = stat === "TRUE" || stat.includes("✅");
-      const isPartialCheck = stat.includes("PARTIAL") || stat.includes("⚠️") || stat.includes("មិនទាន់គ្រប់");
+   function getStatusCategory(s) {
+      const stat = String(s.status||"").toUpperCase().trim();
 
-      if (isChecked) return "paid";
-      if (isPartialCheck) return "partial";
-
+      // ១. ឆែកមើលសញ្ញាធីក (Checkbox) ឬ ពាក្យជាក់លាក់
+      if (stat === "TRUE" || stat.includes("✅")) return "paid";
+      if (stat.includes("PARTIAL") || stat.includes("⚠️") || stat.includes("មិនទាន់គ្រប់")) return "partial";
+      
+      // ២. បើគ្មានសញ្ញាធីក (ឬ Unchecked = FALSE) យើងឆែកមើលតួលេខ
       const feeNum = parseAmount(s.fee);
       const paidNum = parseAmount(s.paid);
       const balNum = parseAmount(s.balance);
-      
-      const isFeeBlank = String(s.fee).trim() === "";
-      const isPaidBlank = String(s.paid).trim() === "";
-      const isBalBlank = String(s.balance).trim() === "";
 
-      if (isFeeBlank && isPaidBlank && isBalBlank) return "unpaid";
-      if (!isFeeBlank && feeNum === 0) return "paid";
-      if (paidNum > 0 && balNum > 0) return "partial";
-      if (paidNum > 0 && balNum <= 0) return "paid";
+      if (feeNum > 0 && paidNum === 0) return "unpaid"; // មានប្រាក់ត្រូវបង់ តែបង់សូន្យ = មិនទាន់បង់
+      if (paidNum > 0 && balNum > 0) return "partial";  // បង់ខ្លះ តែនៅខ្វះ = បង់មិនទាន់គ្រប់
+      if (paidNum > 0 && balNum <= 0) return "paid";    // បង់រួចរាល់
+
+      // ករណីទទេរស្អាត (មិនទាន់បញ្ចូលតម្លៃអ្វីទាំងអស់)
       return "unpaid";
     }
 
